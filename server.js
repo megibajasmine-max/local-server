@@ -1,11 +1,11 @@
 const express = require('express');
 const cors = require('cors');
-const { spawn } = require('child_process'); // Required to run python scripts
+const { spawn } = require('child_process'); // Required to execute local Python scripts
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-// 1. Configure CORS to accept local testing pages cleanly
+// 1. Configure CORS to accept requests from local files (origin 'null') and Netlify
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || origin === 'null') {
@@ -22,12 +22,12 @@ app.use(express.json());
 
 const MASTER_PASSWORD = process.env.MY_SECRET_PASSWORD || "supersecret123";
 
-// 2. Base Route
+// 2. Base landing check
 app.get('/', (req, res) => {
-    res.send('Server is live! Ready for stock lookups and validation.');
+    res.send('Server is live! Stock Engine and Security Gates are fully active.');
 });
 
-// 3. Password Validation Route
+// 3. POST Route: Password Verification
 app.post('/secret', (req, res) => {
     const receivedSecret = req.body.secret;
     if (receivedSecret === MASTER_PASSWORD) {
@@ -37,31 +37,61 @@ app.post('/secret', (req, res) => {
     }
 });
 
-// 4. Python Stock Engine Route (The missing route causing your 404!)
-app.post('/stock', (req, res) => {
-    const requestedTicker = req.body.ticker || "AAPL";
-
-    // Spawns 'python3 script.py TICKER' on the Render system
-    const pythonProcess = spawn('python3', ['script.py', requestedTicker]);
-
+// Helper function to handle the Python spawn process lifecycle
+function executePythonScript(command, args, res) {
+    const pythonProcess = spawn(command, args);
     let pythonData = '';
+    let pythonError = '';
 
-    // Catch data printed by Python's print() statement
     pythonProcess.stdout.on('data', (data) => {
         pythonData += data.toString();
     });
 
-    // Send data back to frontend once script closes
+    pythonProcess.stderr.on('data', (data) => {
+        pythonError += data.toString();
+    });
+
+    // Handle environment failures gracefully (e.g., if 'python3' command doesn't exist)
+    pythonProcess.on('error', (err) => {
+        if (command === 'python3') {
+            console.log("python3 command failed, trying fallback to 'python'...");
+            return executePythonScript('python', args, res);
+        }
+        return res.status(500).json({ 
+            error: "Python execution environments not responding.", 
+            details: err.message 
+        });
+    });
+
     pythonProcess.on('close', (code) => {
+        if (code !== 0 || pythonError) {
+            console.error(`Python (${command}) Error Stream:`, pythonError);
+            return res.status(500).json({ 
+                error: "Python script returned a failure.", 
+                details: pythonError.trim() || `Exit code: ${code}`
+            });
+        }
+
         try {
             const parsedStockDetails = JSON.parse(pythonData);
             res.json(parsedStockDetails);
         } catch (error) {
-            res.status(500).json({ error: "Failed to read data from local Python script." });
+            res.status(500).json({ 
+                error: "Failed to parse JSON data returned from local Python execution.",
+                rawReceived: pythonData 
+            });
         }
     });
+}
+
+// 4. POST Route: Python Stock Engine
+app.post('/stock', (req, res) => {
+    const requestedTicker = req.body.ticker || "AAPL";
+    // Initiate the execution chain starting with 'python3'
+    executePythonScript('python3', ['script.py', requestedTicker], res);
 });
 
+// 5. Bind server to port
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running smoothly on port ${PORT}`);
 });
