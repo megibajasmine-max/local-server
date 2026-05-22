@@ -5,11 +5,18 @@ const app = express();
 // Render automatically provides a PORT environment variable, defaults to 3000 locally
 const PORT = process.env.PORT || 3000;
 
-// 1. Enable CORS for all methods to pass browser security and preflight checks
+// 1. Configure CORS to explicitly allow local file testing (origin 'null')
 app.use(cors({
-    origin: '*', 
+    origin: function (origin, callback) {
+        // This allows local browser files (origin === 'null') or direct fetches to bypass the check
+        if (!origin || origin === 'null') {
+            return callback(null, true);
+        }
+        return callback(null, true);
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
 }));
 
 // 2. Middleware to parse incoming JSON payloads from your frontend
