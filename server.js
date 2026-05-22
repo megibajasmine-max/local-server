@@ -1,14 +1,13 @@
 const express = require('express');
 const cors = require('cors');
+const { spawn } = require('child_process'); // Required to run python scripts
 const app = express();
 
-// Render automatically provides a PORT environment variable, defaults to 3000 locally
 const PORT = process.env.PORT || 3000;
 
-// 1. Configure CORS to explicitly allow local file testing (origin 'null')
+// 1. Configure CORS to accept local testing pages cleanly
 app.use(cors({
     origin: function (origin, callback) {
-        // This allows local browser files (origin === 'null') or direct fetches to bypass the check
         if (!origin || origin === 'null') {
             return callback(null, true);
         }
@@ -19,35 +18,50 @@ app.use(cors({
     credentials: true
 }));
 
-// 2. Middleware to parse incoming JSON payloads from your frontend
 app.use(express.json());
 
-// 3. Define the master password (uses environment variable on Render, or falls back to default)
 const MASTER_PASSWORD = process.env.MY_SECRET_PASSWORD || "supersecret123";
 
-// 4. Base landing route
+// 2. Base Route
 app.get('/', (req, res) => {
-    res.send('Server is live! Use the frontend to submit credentials.');
+    res.send('Server is live! Ready for stock lookups and validation.');
 });
 
-// 5. POST route for checking the credential sent by your frontend
+// 3. Password Validation Route
 app.post('/secret', (req, res) => {
     const receivedSecret = req.body.secret;
-
     if (receivedSecret === MASTER_PASSWORD) {
-        res.json({ 
-            success: true, 
-            message: "Access Granted! The credential is correct. 🎉" 
-        });
+        res.json({ success: true, message: "Access Granted! 🎉" });
     } else {
-        res.json({ 
-            success: false, 
-            message: "Access Denied! Incorrect credential. ❌" 
-        });
+        res.json({ success: false, message: "Access Denied! ❌" });
     }
 });
 
-// 6. Start the server
+// 4. Python Stock Engine Route (The missing route causing your 404!)
+app.post('/stock', (req, res) => {
+    const requestedTicker = req.body.ticker || "AAPL";
+
+    // Spawns 'python3 script.py TICKER' on the Render system
+    const pythonProcess = spawn('python3', ['script.py', requestedTicker]);
+
+    let pythonData = '';
+
+    // Catch data printed by Python's print() statement
+    pythonProcess.stdout.on('data', (data) => {
+        pythonData += data.toString();
+    });
+
+    // Send data back to frontend once script closes
+    pythonProcess.on('close', (code) => {
+        try {
+            const parsedStockDetails = JSON.parse(pythonData);
+            res.json(parsedStockDetails);
+        } catch (error) {
+            res.status(500).json({ error: "Failed to read data from local Python script." });
+        }
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
