@@ -7,72 +7,38 @@
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>SJT Drive Upload</title>
+<title>Public Assets</title>
 
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial;
-}
 
 body{
 background:#0f172a;
 color:white;
+font-family:Arial;
 padding:20px;
 }
 
-h1{
-font-size:35px;
-margin-bottom:20px;
+.grid{
+display:grid;
+grid-template-columns:1fr;
+gap:20px;
 }
 
-.top{
-display:flex;
-gap:10px;
-margin-bottom:20px;
-}
-
-.top a{
-flex:1;
-text-decoration:none;
-background:#1e293b;
-padding:14px;
-border-radius:15px;
-text-align:center;
-color:white;
-}
-
-.upload{
+.card{
 background:#111827;
-padding:25px;
-border-radius:25px;
-}
-
-input{
-width:100%;
 padding:15px;
-background:#1e293b;
-border:none;
-border-radius:15px;
-color:white;
-margin-bottom:15px;
+border-radius:20px;
 }
 
-button{
+img,video{
 width:100%;
-padding:15px;
-border:none;
 border-radius:15px;
-background:#2563eb;
-color:white;
-font-size:16px;
+margin-top:10px;
 }
 
-#status{
-margin-top:20px;
+a{
+color:#60a5fa;
+word-break:break-all;
 }
 
 </style>
@@ -81,130 +47,48 @@ margin-top:20px;
 
 <body>
 
-<h1>SJT Drive</h1>
+<h1>Public Assets</h1>
 
-<div class="top">
-
-<a href="public.html">
-Public
-</a>
-
-<a href="private.html">
-Private
-</a>
-
-</div>
-
-<div class="upload">
-
-<input
-type="file"
-id="file">
-
-<button onclick="uploadFile()">
-Upload Media
-</button>
-
-<div id="status"></div>
-
-</div>
+<div class="grid" id="grid"></div>
 
 <script>
 
-if(
-!localStorage.getItem(
-'sjt_logged_in'
-)
-){
-window.location.href = "/";
-}
-
-async function uploadFile(){
-
-const file =
-document.getElementById('file').files[0];
-
-if(!file){
-return;
-}
-
-const visibility =
-confirm(
-"Press OK for PUBLIC upload.\nPress Cancel for PRIVATE upload."
-)
-? "public"
-: "private";
-
-const formData =
-new FormData();
-
-formData.append(
-'file',
-file
-);
-
-formData.append(
-'upload_preset',
-'SJT_Cloudinary'
-);
-
-const status =
-document.getElementById('status');
-
-status.innerHTML =
-"Uploading to secure cloud server...";
-
-const response =
-await fetch(
-'https://api.cloudinary.com/v1_1/dndjoswsk/auto/upload',
-{
-method:'POST',
-body: formData
-}
-);
-
-const data =
-await response.json();
-
-const asset = {
-
-url: data.secure_url,
-
-type: file.type,
-
-visibility
-
-};
-
-let items =
+const items =
 JSON.parse(
 localStorage.getItem(
 'sjt_assets'
 )
 ) || [];
 
-items.push(asset);
+const grid =
+document.getElementById('grid');
 
-localStorage.setItem(
-'sjt_assets',
-JSON.stringify(items)
-);
+items
+.filter(i=>i.visibility==="public")
+.forEach(item=>{
 
-status.innerHTML = `
+grid.innerHTML += `
 
-Upload Successful<br><br>
+<div class="card">
 
-Cloud URL:<br>
-
-<a href="${data.secure_url}"
-target="_blank"
-style="color:#60a5fa;">
-${data.secure_url}
+<a href="${item.url}"
+target="_blank">
+${item.url}
 </a>
+
+${
+item.type.startsWith('image')
+?
+`<img src="${item.url}">`
+:
+`<video controls src="${item.url}"></video>`
+}
+
+</div>
 
 `;
 
-}
+});
 
 </script>
 

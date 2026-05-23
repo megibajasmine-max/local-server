@@ -7,7 +7,7 @@
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>Public Assets</title>
+<title>Private Assets</title>
 
 <style>
 
@@ -47,11 +47,19 @@ word-break:break-all;
 
 <body>
 
-<h1>Public Assets</h1>
+<h1>Private Assets</h1>
 
 <div class="grid" id="grid"></div>
 
 <script>
+
+if(
+!localStorage.getItem(
+'sjt_logged_in'
+)
+){
+window.location.href = "/";
+}
 
 const items =
 JSON.parse(
@@ -64,17 +72,14 @@ const grid =
 document.getElementById('grid');
 
 items
-.filter(i=>i.visibility==="public")
+.filter(i=>i.visibility==="private")
 .forEach(item=>{
 
 grid.innerHTML += `
 
 <div class="card">
 
-<a href="${item.url}"
-target="_blank">
-${item.url}
-</a>
+
 
 ${
 item.type.startsWith('image')
