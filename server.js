@@ -1,32 +1,53 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+
 const app = express();
 
-// Render sets this variable automatically, or falls back to 3000 locally
 const PORT = process.env.PORT || 3000;
 
-// 1. Configure CORS to allow incoming connections safely
-app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || origin === 'null') {
-            return callback(null, true);
-        }
-        return callback(null, true);
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
-
-// 2. Parse incoming JSON body data
+app.use(cors());
 app.use(express.json());
 
-// 3. Base Clean Route
-app.get('/', (req, res) => {
-    res.send('Server is completely wiped and fresh! Ready for your next big idea.');
+app.use(express.static(path.join(__dirname, 'public')));
+
+const USER = {
+    username: "Steve Johan",
+    password: "Password123"
+};
+
+app.post('/login', (req, res) => {
+
+    const { username, password } = req.body;
+
+    setTimeout(() => {
+
+        if (
+            username === USER.username &&
+            password === USER.password
+        ) {
+
+            return res.json({
+                success: true
+            });
+
+        } else {
+
+            return res.status(401).json({
+                success: false
+            });
+        }
+
+    }, 2500);
+
 });
 
-// 4. Bind server to port
+app.get('*', (req, res) => {
+    res.sendFile(
+        path.join(__dirname, 'public', 'index.html')
+    );
+});
+
 app.listen(PORT, () => {
-    console.log(`Fresh server running smoothly on port ${PORT}`);
+    console.log(`SJT Drive running on ${PORT}`);
 });

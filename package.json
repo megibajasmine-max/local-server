@@ -1,7 +1,7 @@
 {
-  "name": "local-server",
+  "name": "sjt-drive",
   "version": "1.0.0",
-  "description": "Simple Node.js server",
+  "description": "SJT Drive",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

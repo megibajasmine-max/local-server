@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Public Assets</title>
+
+<style>
+
+body{
+background:#0f172a;
+color:white;
+font-family:Arial;
+padding:20px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr;
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:15px;
+border-radius:20px;
+}
+
+img,video{
+width:100%;
+border-radius:15px;
+margin-top:10px;
+}
+
+a{
+color:#60a5fa;
+word-break:break-all;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Public Assets</h1>
+
+<div class="grid" id="grid"></div>
+
+<script>
+
+const items =
+JSON.parse(
+localStorage.getItem(
+'sjt_assets'
+)
+) || [];
+
+const grid =
+document.getElementById('grid');
+
+items
+.filter(i=>i.visibility==="public")
+.forEach(item=>{
+
+grid.innerHTML += `
+
+<div class="card">
+
+<a href="${item.url}"
+target="_blank">
+${item.url}
+</a>
+
+${
+item.type.startsWith('image')
+?
+`<img src="${item.url}">`
+:
+`<video controls src="${item.url}"></video>`
+}
+
+</div>
+
+`;
+
+});
+
+</script>
+
+</body>
+</html>

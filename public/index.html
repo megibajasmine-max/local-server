@@ -1,48 +1,185 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>Qeta AI</title>
+<title>SJT Drive</title>
 
-<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#0f172a">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+background:#0f172a;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+color:white;
+padding:20px;
+}
+
+.card{
+width:100%;
+max-width:400px;
+background:#111827;
+padding:30px;
+border-radius:25px;
+}
+
+h1{
+font-size:35px;
+margin-bottom:10px;
+text-align:center;
+}
+
+p{
+text-align:center;
+color:#94a3b8;
+margin-bottom:30px;
+}
+
+input{
+width:100%;
+padding:16px;
+border:none;
+border-radius:15px;
+margin-bottom:15px;
+background:#1e293b;
+color:white;
+font-size:16px;
+}
+
+button{
+width:100%;
+padding:16px;
+border:none;
+border-radius:15px;
+background:#2563eb;
+color:white;
+font-size:17px;
+}
+
+.loader{
+display:none;
+margin-top:20px;
+text-align:center;
+color:#60a5fa;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<div class="container">
+<div class="card">
 
-    <div class="card">
+<h1>SJT Drive</h1>
 
-        <h1>Qeta AI</h1>
+<p>
+Secure Mobile Cloud Drive
+</p>
 
-        <p class="subtitle">
-            Mobile AI Platform
-        </p>
+<input
+type="text"
+id="username"
+placeholder="Username">
 
-        <input
-        type="text"
-        id="username"
-        placeholder="Username">
+<input
+type="password"
+id="password"
+placeholder="Password">
 
-        <input
-        type="password"
-        id="password"
-        placeholder="Password">
+<button onclick="login()">
+Access Drive
+</button>
 
-        <button onclick="login()">
-            Login
-        </button>
+<div class="loader" id="loader">
 
-        <p id="status"></p>
-
-    </div>
+Authenticating Secure Server...
 
 </div>
 
-<script src="app.js"></script>
+</div>
+
+<script>
+
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('/sw.js');
+}
+
+async function login(){
+
+const username =
+document.getElementById('username').value;
+
+const password =
+document.getElementById('password').value;
+
+const loader =
+document.getElementById('loader');
+
+loader.style.display = "block";
+
+const response = await fetch('/login', {
+
+method:'POST',
+
+headers:{
+'Content-Type':'application/json'
+},
+
+body: JSON.stringify({
+username,
+password
+})
+
+});
+
+loader.innerHTML =
+"Verifying Credentials...";
+
+setTimeout(async()=>{
+
+if(response.ok){
+
+loader.innerHTML =
+"Secure Access Granted";
+
+localStorage.setItem(
+'sjt_logged_in',
+'true'
+);
+
+window.location.href =
+'/drive/index.html';
+
+}else{
+
+loader.innerHTML =
+"Authentication Failed";
+
+}
+
+},2000);
+
+}
+
+</script>
 
 </body>
 </html>
