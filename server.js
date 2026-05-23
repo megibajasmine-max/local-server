@@ -15,8 +15,6 @@ app.use(express.json({
     limit: '50mb'
 }));
 
-app.use(express.static(__dirname));
-
 const USER = {
     username: 'Steve Johan',
     password: 'Password123'
@@ -24,9 +22,9 @@ const USER = {
 
 app.get('/', (req, res) => {
 
-    res.sendFile(
-        path.join(__dirname, 'index.html')
-    );
+    res.json({
+        status: 'SJT Drive Backend Running'
+    });
 
 });
 
@@ -34,33 +32,32 @@ app.post('/login', (req, res) => {
 
     const { username, password } = req.body;
 
-    if (
+    if(
         username === USER.username &&
         password === USER.password
-    ) {
+    ){
 
         res.json({
             success: true
         });
 
-    } else {
+    }else{
 
         res.status(401).json({
-            success: false,
-            message: 'Invalid credentials'
+            success: false
         });
 
     }
 
 });
 
-app.post('https://local-server-1-0ht9.onrender.com', (req, res) => {
+app.post('/save-file', (req, res) => {
 
     const fileData = req.body;
 
     let files = [];
 
-    if (fs.existsSync(DB_FILE)) {
+    if(fs.existsSync(DB_FILE)){
 
         files = JSON.parse(
             fs.readFileSync(DB_FILE)
@@ -83,8 +80,10 @@ app.post('https://local-server-1-0ht9.onrender.com', (req, res) => {
 
 app.get('/files', (req, res) => {
 
-    if (!fs.existsSync(DB_FILE)) {
+    if(!fs.existsSync(DB_FILE)){
+
         return res.json([]);
+
     }
 
     const files = JSON.parse(
