@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
-<title>Public Files</title>
+<title>SJT Drive Upload</title>
 
 <style>
 
@@ -17,109 +19,74 @@ font-family:Arial;
 }
 
 body{
-background:#000;
+background:#0f172a;
 color:white;
 padding:20px;
 }
 
-.header{
-font-size:34px;
-font-weight:bold;
-margin-bottom:10px;
-}
-
-.sub{
-color:#888;
-margin-bottom:30px;
-}
-
-.nav{
-display:flex;
-gap:12px;
-margin-bottom:25px;
-}
-
-.nav a{
-flex:1;
-padding:18px;
-background:#111;
-border-radius:18px;
-text-decoration:none;
-color:white;
-text-align:center;
-font-weight:bold;
-}
-
-.file{
-background:#111;
-padding:20px;
-border-radius:24px;
+h1{
+font-size:35px;
 margin-bottom:20px;
 }
 
-.file-name{
-font-size:18px;
-font-weight:bold;
-margin-bottom:10px;
-word-break:break-word;
+.top{
+display:flex;
+gap:10px;
+margin-bottom:20px;
 }
 
-img{
-width:100%;
-border-radius:20px;
-margin-top:15px;
-}
-
-video{
-width:100%;
-border-radius:20px;
-margin-top:15px;
-}
-
-audio{
-width:100%;
-margin-top:15px;
-}
-
-.open-btn{
-display:block;
-margin-top:15px;
-padding:16px;
-border-radius:18px;
-background:white;
-color:black;
+.top a{
+flex:1;
 text-decoration:none;
+background:#1e293b;
+padding:14px;
+border-radius:15px;
 text-align:center;
-font-weight:bold;
+color:white;
 }
 
-.share-btn{
+.upload{
+background:#111827;
+padding:25px;
+border-radius:25px;
+}
+
+input{
 width:100%;
-margin-top:12px;
-padding:16px;
+padding:15px;
+background:#1e293b;
 border:none;
-border-radius:18px;
-background:#222;
+border-radius:15px;
 color:white;
-font-weight:bold;
+margin-bottom:15px;
+}
+
+button{
+width:100%;
+padding:15px;
+border:none;
+border-radius:15px;
+background:#2563eb;
+color:white;
+font-size:16px;
+}
+
+#status{
+margin-top:20px;
 }
 
 </style>
+
 </head>
+
 <body>
 
-<div class="header">
-Public Files
-</div>
+<h1>SJT Drive</h1>
 
-<div class="sub">
-Files Shared Publicly
-</div>
+<div class="top">
 
-<div class="nav">
-
-<a href="index.html">
-Upload
+<a href="public.html">
+Public
 </a>
 
 <a href="private.html">
@@ -128,131 +95,116 @@ Private
 
 </div>
 
-<div id="files"></div>
+<div class="upload">
+
+<input
+type="file"
+id="file">
+
+<button onclick="uploadFile()">
+Upload Media
+</button>
+
+<div id="status"></div>
+
+</div>
 
 <script>
 
-const API =
-"https://local-server-1-0ht9.onrender.com";
+if(
+!localStorage.getItem(
+'sjt_logged_in'
+)
+){
+window.location.href = "/";
+}
 
-async function loadFiles(){
+async function uploadFile(){
+
+const file =
+document.getElementById('file').files[0];
+
+if(!file){
+return;
+}
+
+const visibility =
+confirm(
+"Press OK for PUBLIC upload.\nPress Cancel for PRIVATE upload."
+)
+? "public"
+: "private";
+
+const formData =
+new FormData();
+
+formData.append(
+'file',
+file
+);
+
+formData.append(
+'upload_preset',
+'SJT_Cloudinary'
+);
+
+const status =
+document.getElementById('status');
+
+status.innerHTML =
+"Uploading to secure cloud server...";
 
 const response =
 await fetch(
-`${API}/files`
+'https://api.cloudinary.com/v1_1/dndjoswsk/auto/upload',
+{
+method:'POST',
+body: formData
+}
 );
 
-const files =
+const data =
 await response.json();
 
-const publicFiles =
-files.filter(
-file => file.type === 'public'
+const asset = {
+
+url: data.secure_url,
+
+type: file.type,
+
+visibility
+
+};
+
+let items =
+JSON.parse(
+localStorage.getItem(
+'sjt_assets'
+)
+) || [];
+
+items.push(asset);
+
+localStorage.setItem(
+'sjt_assets',
+JSON.stringify(items)
 );
 
-let html = '';
+status.innerHTML = `
 
-publicFiles.forEach(file=>{
+Upload Successful<br><br>
 
-html += `
-<div class="file">
+Cloud URL:<br>
 
-<div class="file-name">
-${file.fileName}
-</div>
-`;
-
-if(file.url.match(
-/jpg|jpeg|png|gif|webp/i
-)){
-
-html += `
-<img src="${file.url}">
-`;
-
-}
-
-if(file.url.match(
-/mp4|mov|webm/i
-)){
-
-html += `
-<video controls>
-<source src="${file.url}">
-</video>
-`;
-
-}
-
-if(file.url.match(
-/mp3|wav|ogg/i
-)){
-
-html += `
-<audio controls>
-<source src="${file.url}">
-</audio>
-`;
-
-}
-
-html += `
-
-<a class="open-btn"
-href="${file.url}"
-target="_blank">
-
-Open File
-
+<a href="${data.secure_url}"
+target="_blank"
+style="color:#60a5fa;">
+${data.secure_url}
 </a>
 
-<button class="share-btn"
-onclick="shareFile('${file.url}')">
-
-Share File
-
-</button>
-
-</div>
 `;
 
-});
-
-document.getElementById(
-'files'
-).innerHTML = html;
-
 }
-
-async function shareFile(url){
-
-if(navigator.share){
-
-await navigator.share({
-
-title:'SJT Drive',
-
-text:'Shared using SJT Drive',
-
-url:url
-
-});
-
-}else{
-
-navigator.clipboard.writeText(
-url
-);
-
-alert(
-'Link Copied'
-);
-
-}
-
-}
-
-loadFiles();
 
 </script>
 

@@ -1,103 +1,53 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
 const path = require('path');
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-const DB_FILE = path.join(__dirname, 'files.json');
-
 app.use(cors());
+app.use(express.json());
 
-app.use(express.json({
-    limit: '50mb'
-}));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const USER = {
-    username: 'Steve Johan',
-    password: 'Password123'
+    username: "Steve Johan",
+    password: "Password123"
 };
-
-app.get('/', (req, res) => {
-
-    res.json({
-        status: 'SJT Drive Backend Running'
-    });
-
-});
 
 app.post('/login', (req, res) => {
 
     const { username, password } = req.body;
 
-    if(
-        username === USER.username &&
-        password === USER.password
-    ){
+    setTimeout(() => {
 
-        res.json({
-            success: true
-        });
+        if (
+            username === USER.username &&
+            password === USER.password
+        ) {
 
-    }else{
+            return res.json({
+                success: true
+            });
 
-        res.status(401).json({
-            success: false
-        });
+        } else {
 
-    }
+            return res.status(401).json({
+                success: false
+            });
+        }
 
-});
-
-app.post('/save-file', (req, res) => {
-
-    const fileData = req.body;
-
-    let files = [];
-
-    if(fs.existsSync(DB_FILE)){
-
-        files = JSON.parse(
-            fs.readFileSync(DB_FILE)
-        );
-
-    }
-
-    files.unshift(fileData);
-
-    fs.writeFileSync(
-        DB_FILE,
-        JSON.stringify(files, null, 2)
-    );
-
-    res.json({
-        success: true
-    });
+    }, 2500);
 
 });
 
-app.get('/files', (req, res) => {
-
-    if(!fs.existsSync(DB_FILE)){
-
-        return res.json([]);
-
-    }
-
-    const files = JSON.parse(
-        fs.readFileSync(DB_FILE)
+app.get('*', (req, res) => {
+    res.sendFile(
+        path.join(__dirname, 'public', 'index.html')
     );
-
-    res.json(files);
-
 });
 
 app.listen(PORT, () => {
-
-    console.log(
-        `Server running on port ${PORT}`
-    );
-
+    console.log(`SJT Drive running on ${PORT}`);
 });

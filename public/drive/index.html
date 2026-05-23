@@ -1,15 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+content="width=device-width, initial-scale=1.0">
 
-<title>SJT Drive</title>
-
-<link rel="manifest" href="../manifest.json">
-
-<meta name="theme-color" content="#000000">
+<title>SJT Drive Upload</title>
 
 <style>
 
@@ -21,158 +19,71 @@ font-family:Arial;
 }
 
 body{
-background:#000;
+background:#0f172a;
 color:white;
 padding:20px;
-min-height:100vh;
 }
 
-.header{
-font-size:34px;
-font-weight:bold;
-margin-bottom:10px;
-}
-
-.sub{
-color:#888;
-margin-bottom:30px;
-font-size:15px;
-}
-
-.card{
-background:#111;
-padding:22px;
-border-radius:28px;
-margin-bottom:25px;
-}
-
-.title{
-font-size:20px;
-font-weight:bold;
+h1{
+font-size:35px;
 margin-bottom:20px;
 }
 
-.upload-btn{
-width:100%;
-padding:20px;
-border:none;
-border-radius:22px;
-background:white;
-color:black;
-font-size:18px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.file-input{
-display:none;
-}
-
-.status{
-margin-top:18px;
-font-size:15px;
-color:#00ff88;
-word-break:break-word;
-line-height:1.6;
-}
-
-.nav{
+.top{
 display:flex;
-gap:12px;
-margin-top:30px;
+gap:10px;
+margin-bottom:20px;
 }
 
-.nav a{
+.top a{
 flex:1;
-padding:18px;
-background:#111;
-border-radius:18px;
 text-decoration:none;
-color:white;
+background:#1e293b;
+padding:14px;
+border-radius:15px;
 text-align:center;
-font-weight:bold;
+color:white;
 }
 
-.loader{
-display:none;
-margin-top:20px;
-font-size:15px;
-color:#aaa;
-animation:pulse 1s infinite;
+.upload{
+background:#111827;
+padding:25px;
+border-radius:25px;
 }
 
-@keyframes pulse{
-0%{opacity:0.3;}
-50%{opacity:1;}
-100%{opacity:0.3;}
-}
-
-.preview{
+input{
 width:100%;
-border-radius:20px;
-margin-top:20px;
-display:none;
+padding:15px;
+background:#1e293b;
+border:none;
+border-radius:15px;
+color:white;
+margin-bottom:15px;
 }
 
-video.preview{
-max-height:300px;
+button{
+width:100%;
+padding:15px;
+border:none;
+border-radius:15px;
+background:#2563eb;
+color:white;
+font-size:16px;
+}
+
+#status{
+margin-top:20px;
 }
 
 </style>
+
 </head>
+
 <body>
 
-<div class="header">
-SJT Drive
-</div>
+<h1>SJT Drive</h1>
 
-<div class="sub">
-Cross Device Mobile Cloud Storage
-</div>
-
-<div class="card">
-
-<div class="title">
-Upload Media
-</div>
-
-<input type="file"
-       id="fileInput"
-       class="file-input"
-       accept="image/*,video/*,audio/*">
-
-<button class="upload-btn"
-        onclick="chooseFile()">
-
-Upload Media
-
-</button>
-
-<div class="loader"
-     id="loader">
-
-Connecting to SJT cloud servers...
-
-</div>
-
-<img id="imagePreview"
-     class="preview">
-
-<video id="videoPreview"
-       class="preview"
-       controls></video>
-
-<audio id="audioPreview"
-       class="preview"
-       controls
-       style="width:100%;margin-top:20px;display:none;"></audio>
-
-<div class="status"
-     id="status"></div>
-
-</div>
-
-<div class="nav">
+<div class="top">
 
 <a href="public.html">
 Public
@@ -184,57 +95,45 @@ Private
 
 </div>
 
+<div class="upload">
+
+<input
+type="file"
+id="file">
+
+<button onclick="uploadFile()">
+Upload Media
+</button>
+
+<div id="status"></div>
+
+</div>
+
 <script>
 
-const CLOUD_NAME = "dndjoswsk";
-
-const UPLOAD_PRESET = "SJT_Cloudinary";
-
-const API =
-"https://local-server-1-0ht9.onrender.com";
-
-function chooseFile(){
-
-document.getElementById(
-'fileInput'
-).click();
-
+if(
+!localStorage.getItem(
+'sjt_logged_in'
+)
+){
+window.location.href = "/";
 }
 
-document
-.getElementById('fileInput')
-.addEventListener(
-'change',
-async function(event){
+async function uploadFile(){
 
 const file =
-event.target.files[0];
+document.getElementById('file').files[0];
 
 if(!file){
 return;
 }
 
-const privacy =
+const visibility =
 confirm(
-"OK = PUBLIC\nCancel = PRIVATE"
+"Press OK for PUBLIC upload.\nPress Cancel for PRIVATE upload."
 )
 ? "public"
 : "private";
-
-const loader =
-document.getElementById(
-'loader'
-);
-
-const status =
-document.getElementById(
-'status'
-);
-
-loader.style.display = 'block';
-
-status.innerHTML =
-'Authenticating upload session...';
 
 const formData =
 new FormData();
@@ -246,137 +145,64 @@ file
 
 formData.append(
 'upload_preset',
-UPLOAD_PRESET
+'SJT_Cloudinary'
 );
 
-try{
+const status =
+document.getElementById('status');
 
-setTimeout(()=>{
 status.innerHTML =
-'Connecting to edge nodes...';
-},1000);
-
-setTimeout(()=>{
-status.innerHTML =
-'Encrypting media payload...';
-},2000);
-
-setTimeout(()=>{
-status.innerHTML =
-'Uploading to distributed storage...';
-},3000);
+"Uploading to secure cloud server...";
 
 const response =
 await fetch(
-`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
+'https://api.cloudinary.com/v1_1/dndjoswsk/auto/upload',
 {
 method:'POST',
-body:formData
+body: formData
 }
 );
 
 const data =
 await response.json();
 
-await fetch(
-`${API}/save-file`,
-{
-method:'POST',
+const asset = {
 
-headers:{
-'Content-Type':
-'application/json'
-},
+url: data.secure_url,
 
-body:JSON.stringify({
+type: file.type,
 
-fileName:file.name,
+visibility
 
-url:data.secure_url,
+};
 
-type:privacy,
+let items =
+JSON.parse(
+localStorage.getItem(
+'sjt_assets'
+)
+) || [];
 
-uploadedAt:new Date()
+items.push(asset);
 
-})
-
-}
+localStorage.setItem(
+'sjt_assets',
+JSON.stringify(items)
 );
-
-loader.style.display =
-'none';
 
 status.innerHTML = `
-Upload Complete<br><br>
-Cloud Sync Successful
+
+Upload Successful<br><br>
+
+Cloud URL:<br>
+
+<a href="${data.secure_url}"
+target="_blank"
+style="color:#60a5fa;">
+${data.secure_url}
+</a>
+
 `;
-
-previewFile(
-data.secure_url,
-file.type
-);
-
-}catch(error){
-
-loader.style.display =
-'none';
-
-status.innerHTML =
-'Upload Failed';
-
-}
-
-});
-
-function previewFile(url,type){
-
-const image =
-document.getElementById(
-'imagePreview'
-);
-
-const video =
-document.getElementById(
-'videoPreview'
-);
-
-const audio =
-document.getElementById(
-'audioPreview'
-);
-
-image.style.display='none';
-video.style.display='none';
-audio.style.display='none';
-
-if(type.startsWith('image')){
-
-image.src=url;
-image.style.display='block';
-
-}
-
-else if(type.startsWith('video')){
-
-video.src=url;
-video.style.display='block';
-
-}
-
-else if(type.startsWith('audio')){
-
-audio.src=url;
-audio.style.display='block';
-
-}
-
-}
-
-if('serviceWorker' in navigator){
-
-navigator.serviceWorker.register(
-'../sw.js'
-);
 
 }
 

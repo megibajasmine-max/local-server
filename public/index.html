@@ -1,193 +1,183 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Public Files</title>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>SJT Drive</title>
+
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#0f172a">
 
 <style>
 
-body{
+*{
 margin:0;
-padding:20px;
-background:#000;
-font-family:Arial;
-color:white;
-}
-
-.header{
-font-size:34px;
-font-weight:bold;
-margin-bottom:25px;
-}
-
-.file{
-background:#111;
-padding:20px;
-border-radius:22px;
-margin-bottom:20px;
-overflow:hidden;
-word-break:break-word;
-}
-
-.file-name{
-font-size:18px;
-font-weight:bold;
-margin-bottom:15px;
-}
-
-.open-btn{
-display:block;
-width:100%;
-padding:16px;
-border-radius:16px;
-background:white;
-color:black;
-text-decoration:none;
-text-align:center;
-font-weight:bold;
-margin-top:15px;
+padding:0;
 box-sizing:border-box;
+font-family:Arial;
 }
 
-img{
-width:100%;
-border-radius:18px;
-margin-top:15px;
-}
-
-video{
-width:100%;
-border-radius:18px;
-margin-top:15px;
-}
-
-audio{
-width:100%;
-margin-top:15px;
-}
-
-.empty{
-text-align:center;
-margin-top:60px;
-color:#888;
-font-size:18px;
-}
-
-.top-nav{
+body{
+background:#0f172a;
+height:100vh;
 display:flex;
-gap:10px;
-margin-bottom:25px;
+justify-content:center;
+align-items:center;
+color:white;
+padding:20px;
 }
 
-.top-nav a{
-flex:1;
-padding:16px;
-background:#111;
-border-radius:16px;
-text-decoration:none;
+.card{
+width:100%;
+max-width:400px;
+background:#111827;
+padding:30px;
+border-radius:25px;
+}
+
+h1{
+font-size:35px;
+margin-bottom:10px;
 text-align:center;
+}
+
+p{
+text-align:center;
+color:#94a3b8;
+margin-bottom:30px;
+}
+
+input{
+width:100%;
+padding:16px;
+border:none;
+border-radius:15px;
+margin-bottom:15px;
+background:#1e293b;
 color:white;
-font-weight:bold;
+font-size:16px;
+}
+
+button{
+width:100%;
+padding:16px;
+border:none;
+border-radius:15px;
+background:#2563eb;
+color:white;
+font-size:17px;
+}
+
+.loader{
+display:none;
+margin-top:20px;
+text-align:center;
+color:#60a5fa;
 }
 
 </style>
+
 </head>
+
 <body>
 
-<div class="header">
-Public Files
+<div class="card">
+
+<h1>SJT Drive</h1>
+
+<p>
+Secure Mobile Cloud Drive
+</p>
+
+<input
+type="text"
+id="username"
+placeholder="Username">
+
+<input
+type="password"
+id="password"
+placeholder="Password">
+
+<button onclick="login()">
+Access Drive
+</button>
+
+<div class="loader" id="loader">
+
+Authenticating Secure Server...
+
 </div>
 
-<div class="top-nav">
-<a href="index.html">Upload</a>
-<a href="private.html">Private</a>
 </div>
-
-<div id="files"></div>
 
 <script>
 
-async function loadFiles(){
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('/sw.js');
+}
 
-    const response = await fetch('/files');
+async function login(){
 
-    const files = await response.json();
+const username =
+document.getElementById('username').value;
 
-    const publicFiles = files.filter(
-        file => file.type === 'public'
-    );
+const password =
+document.getElementById('password').value;
 
-    let html = '';
+const loader =
+document.getElementById('loader');
 
-    if(publicFiles.length === 0){
+loader.style.display = "block";
 
-        html = `
-        <div class="empty">
-        No Public Files Uploaded
-        </div>
-        `;
+const response = await fetch('/login', {
 
-    }
+method:'POST',
 
-    publicFiles.forEach(file => {
+headers:{
+'Content-Type':'application/json'
+},
 
-        html += `
-        <div class="file">
+body: JSON.stringify({
+username,
+password
+})
 
-            <div class="file-name">
-            ${file.fileName}
-            </div>
-        `;
+});
 
-        if(file.url.match(/jpg|jpeg|png|gif|webp/i)){
+loader.innerHTML =
+"Verifying Credentials...";
 
-            html += `
-            <img src="${file.url}">
-            `;
+setTimeout(async()=>{
 
-        }
+if(response.ok){
 
-        if(file.url.match(/mp4|mov|webm/i)){
+loader.innerHTML =
+"Secure Access Granted";
 
-            html += `
-            <video controls>
-                <source src="${file.url}">
-            </video>
-            `;
+localStorage.setItem(
+'sjt_logged_in',
+'true'
+);
 
-        }
+window.location.href =
+'/drive/index.html';
 
-        if(file.url.match(/mp3|wav|ogg/i)){
+}else{
 
-            html += `
-            <audio controls>
-                <source src="${file.url}">
-            </audio>
-            `;
-
-        }
-
-        html += `
-            <a class="open-btn"
-               href="${file.url}"
-               target="_blank">
-
-               Open File
-
-            </a>
-
-        </div>
-        `;
-
-    });
-
-    document.getElementById('files').innerHTML = html;
+loader.innerHTML =
+"Authentication Failed";
 
 }
 
-loadFiles();
+},2000);
+
+}
 
 </script>
 
