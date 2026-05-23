@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+content="width=device-width, initial-scale=1.0">
 
-<title>Public Files - SJT Drive</title>
+<title>Public Files</title>
 
 <style>
 
@@ -20,7 +20,6 @@ body{
 background:#000;
 color:white;
 padding:20px;
-min-height:100vh;
 }
 
 .header{
@@ -32,7 +31,6 @@ margin-bottom:10px;
 .sub{
 color:#888;
 margin-bottom:30px;
-font-size:15px;
 }
 
 .nav{
@@ -55,89 +53,55 @@ font-weight:bold;
 .file{
 background:#111;
 padding:20px;
-border-radius:25px;
+border-radius:24px;
 margin-bottom:20px;
-overflow:hidden;
 }
 
 .file-name{
 font-size:18px;
 font-weight:bold;
-margin-bottom:12px;
+margin-bottom:10px;
 word-break:break-word;
 }
 
-.file-date{
-font-size:13px;
-color:#888;
-margin-bottom:18px;
-}
-
-.preview-image{
+img{
 width:100%;
 border-radius:20px;
-margin-bottom:18px;
+margin-top:15px;
 }
 
-.preview-video{
+video{
 width:100%;
 border-radius:20px;
-margin-bottom:18px;
-max-height:350px;
+margin-top:15px;
 }
 
-.preview-audio{
+audio{
 width:100%;
-margin-bottom:18px;
-}
-
-.actions{
-display:flex;
-gap:12px;
-}
-
-.actions a,
-.actions button{
-flex:1;
-padding:16px;
-border:none;
-border-radius:18px;
-font-size:15px;
-font-weight:bold;
-cursor:pointer;
-text-decoration:none;
-text-align:center;
+margin-top:15px;
 }
 
 .open-btn{
+display:block;
+margin-top:15px;
+padding:16px;
+border-radius:18px;
 background:white;
 color:black;
+text-decoration:none;
+text-align:center;
+font-weight:bold;
 }
 
 .share-btn{
+width:100%;
+margin-top:12px;
+padding:16px;
+border:none;
+border-radius:18px;
 background:#222;
 color:white;
-}
-
-.empty{
-text-align:center;
-margin-top:80px;
-font-size:18px;
-color:#666;
-}
-
-.loading{
-text-align:center;
-margin-top:60px;
-font-size:16px;
-color:#999;
-animation:pulse 1s infinite;
-}
-
-@keyframes pulse{
-0%{opacity:0.3;}
-50%{opacity:1;}
-100%{opacity:0.3;}
+font-weight:bold;
 }
 
 </style>
@@ -149,7 +113,7 @@ Public Files
 </div>
 
 <div class="sub">
-Files Shared Publicly Across Devices
+Files Shared Publicly
 </div>
 
 <div class="nav">
@@ -164,194 +128,127 @@ Private
 
 </div>
 
-<div id="filesContainer">
-
-<div class="loading">
-Connecting to cloud storage...
-</div>
-
-</div>
+<div id="files"></div>
 
 <script>
 
+const API =
+"https://local-server-1-0ht9.onrender.com";
+
 async function loadFiles(){
 
-    try{
+const response =
+await fetch(
+`${API}/files`
+);
 
-        const response =
-        await fetch('/files');
+const files =
+await response.json();
 
-        const files =
-        await response.json();
+const publicFiles =
+files.filter(
+file => file.type === 'public'
+);
 
-        const publicFiles =
-        files.filter(
-            file => file.type === 'public'
-        );
+let html = '';
 
-        const container =
-        document.getElementById(
-            'filesContainer'
-        );
+publicFiles.forEach(file=>{
 
-        if(publicFiles.length === 0){
+html += `
+<div class="file">
 
-            container.innerHTML = `
-            <div class="empty">
-            No Public Files Uploaded
-            </div>
-            `;
+<div class="file-name">
+${file.fileName}
+</div>
+`;
 
-            return;
+if(file.url.match(
+/jpg|jpeg|png|gif|webp/i
+)){
 
-        }
+html += `
+<img src="${file.url}">
+`;
 
-        let html = '';
+}
 
-        publicFiles.forEach(file => {
+if(file.url.match(
+/mp4|mov|webm/i
+)){
 
-            html += `
-            <div class="file">
+html += `
+<video controls>
+<source src="${file.url}">
+</video>
+`;
 
-                <div class="file-name">
-                ${file.fileName}
-                </div>
+}
 
-                <div class="file-date">
-                Uploaded:
-                ${new Date(file.uploadedAt)
-                    .toLocaleString()}
-                </div>
-            `;
+if(file.url.match(
+/mp3|wav|ogg/i
+)){
 
-            if(
-                file.url.match(
-                    /\.(jpg|jpeg|png|gif|webp)$/i
-                )
-            ){
+html += `
+<audio controls>
+<source src="${file.url}">
+</audio>
+`;
 
-                html += `
-                <img
-                src="${file.url}"
-                class="preview-image">
-                `;
+}
 
-            }
+html += `
 
-            else if(
-                file.url.match(
-                    /\.(mp4|webm|mov)$/i
-                )
-            ){
+<a class="open-btn"
+href="${file.url}"
+target="_blank">
 
-                html += `
-                <video
-                controls
-                class="preview-video">
+Open File
 
-                <source
-                src="${file.url}">
+</a>
 
-                </video>
-                `;
+<button class="share-btn"
+onclick="shareFile('${file.url}')">
 
-            }
+Share File
 
-            else if(
-                file.url.match(
-                    /\.(mp3|wav|ogg)$/i
-                )
-            ){
+</button>
 
-                html += `
-                <audio
-                controls
-                class="preview-audio">
+</div>
+`;
 
-                <source
-                src="${file.url}">
+});
 
-                </audio>
-                `;
-
-            }
-
-            html += `
-
-            <div class="actions">
-
-                <a href="${file.url}"
-                   target="_blank"
-                   class="open-btn">
-
-                Open
-
-                </a>
-
-                <button
-                class="share-btn"
-                onclick="shareFile('${file.url}')">
-
-                Share
-
-                </button>
-
-            </div>
-
-            </div>
-            `;
-
-        });
-
-        container.innerHTML = html;
-
-    }catch(error){
-
-        document.getElementById(
-            'filesContainer'
-        ).innerHTML = `
-        <div class="empty">
-        Failed To Connect To Server
-        </div>
-        `;
-
-    }
+document.getElementById(
+'files'
+).innerHTML = html;
 
 }
 
 async function shareFile(url){
 
-    try{
+if(navigator.share){
 
-        if(navigator.share){
+await navigator.share({
 
-            await navigator.share({
+title:'SJT Drive',
 
-                title:'SJT Drive File',
+text:'Shared using SJT Drive',
 
-                text:'View my shared file',
+url:url
 
-                url:url
+});
 
-            });
+}else{
 
-        }else{
+navigator.clipboard.writeText(
+url
+);
 
-            navigator.clipboard.writeText(url);
+alert(
+'Link Copied'
+);
 
-            alert(
-                'File link copied to clipboard'
-            );
-
-        }
-
-    }catch(error){
-
-        alert(
-            'Unable to share file'
-        );
-
-    }
+}
 
 }
 
