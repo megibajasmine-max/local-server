@@ -1,94 +1,361 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+      content="width=device-width, initial-scale=1.0">
 
-<title>Public Assets</title>
+<title>Public Files - SJT Drive</title>
 
 <style>
 
-body{
-background:#0f172a;
-color:white;
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
 font-family:Arial;
+}
+
+body{
+background:#000;
+color:white;
 padding:20px;
+min-height:100vh;
 }
 
-.grid{
-display:grid;
-grid-template-columns:1fr;
-gap:20px;
+.header{
+font-size:34px;
+font-weight:bold;
+margin-bottom:10px;
 }
 
-.card{
-background:#111827;
-padding:15px;
-border-radius:20px;
+.sub{
+color:#888;
+margin-bottom:30px;
+font-size:15px;
 }
 
-img,video{
+.nav{
+display:flex;
+gap:12px;
+margin-bottom:25px;
+}
+
+.nav a{
+flex:1;
+padding:18px;
+background:#111;
+border-radius:18px;
+text-decoration:none;
+color:white;
+text-align:center;
+font-weight:bold;
+}
+
+.file{
+background:#111;
+padding:20px;
+border-radius:25px;
+margin-bottom:20px;
+overflow:hidden;
+}
+
+.file-name{
+font-size:18px;
+font-weight:bold;
+margin-bottom:12px;
+word-break:break-word;
+}
+
+.file-date{
+font-size:13px;
+color:#888;
+margin-bottom:18px;
+}
+
+.preview-image{
 width:100%;
-border-radius:15px;
-margin-top:10px;
+border-radius:20px;
+margin-bottom:18px;
 }
 
-a{
-color:#60a5fa;
-word-break:break-all;
+.preview-video{
+width:100%;
+border-radius:20px;
+margin-bottom:18px;
+max-height:350px;
+}
+
+.preview-audio{
+width:100%;
+margin-bottom:18px;
+}
+
+.actions{
+display:flex;
+gap:12px;
+}
+
+.actions a,
+.actions button{
+flex:1;
+padding:16px;
+border:none;
+border-radius:18px;
+font-size:15px;
+font-weight:bold;
+cursor:pointer;
+text-decoration:none;
+text-align:center;
+}
+
+.open-btn{
+background:white;
+color:black;
+}
+
+.share-btn{
+background:#222;
+color:white;
+}
+
+.empty{
+text-align:center;
+margin-top:80px;
+font-size:18px;
+color:#666;
+}
+
+.loading{
+text-align:center;
+margin-top:60px;
+font-size:16px;
+color:#999;
+animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+0%{opacity:0.3;}
+50%{opacity:1;}
+100%{opacity:0.3;}
 }
 
 </style>
-
 </head>
-
 <body>
 
-<h1>Public Assets</h1>
+<div class="header">
+Public Files
+</div>
 
-<div class="grid" id="grid"></div>
+<div class="sub">
+Files Shared Publicly Across Devices
+</div>
 
-<script>
+<div class="nav">
 
-const items =
-JSON.parse(
-localStorage.getItem(
-'sjt_assets'
-)
-) || [];
-
-const grid =
-document.getElementById('grid');
-
-items
-.filter(i=>i.visibility==="public")
-.forEach(item=>{
-
-grid.innerHTML += `
-
-<div class="card">
-
-<a href="${item.url}"
-target="_blank">
-${item.url}
+<a href="index.html">
+Upload
 </a>
 
-${
-item.type.startsWith('image')
-?
-`<img src="${item.url}">`
-:
-`<video controls src="${item.url}"></video>`
-}
+<a href="private.html">
+Private
+</a>
 
 </div>
 
-`;
+<div id="filesContainer">
 
-});
+<div class="loading">
+Connecting to cloud storage...
+</div>
+
+</div>
+
+<script>
+
+async function loadFiles(){
+
+    try{
+
+        const response =
+        await fetch('/files');
+
+        const files =
+        await response.json();
+
+        const publicFiles =
+        files.filter(
+            file => file.type === 'public'
+        );
+
+        const container =
+        document.getElementById(
+            'filesContainer'
+        );
+
+        if(publicFiles.length === 0){
+
+            container.innerHTML = `
+            <div class="empty">
+            No Public Files Uploaded
+            </div>
+            `;
+
+            return;
+
+        }
+
+        let html = '';
+
+        publicFiles.forEach(file => {
+
+            html += `
+            <div class="file">
+
+                <div class="file-name">
+                ${file.fileName}
+                </div>
+
+                <div class="file-date">
+                Uploaded:
+                ${new Date(file.uploadedAt)
+                    .toLocaleString()}
+                </div>
+            `;
+
+            if(
+                file.url.match(
+                    /\.(jpg|jpeg|png|gif|webp)$/i
+                )
+            ){
+
+                html += `
+                <img
+                src="${file.url}"
+                class="preview-image">
+                `;
+
+            }
+
+            else if(
+                file.url.match(
+                    /\.(mp4|webm|mov)$/i
+                )
+            ){
+
+                html += `
+                <video
+                controls
+                class="preview-video">
+
+                <source
+                src="${file.url}">
+
+                </video>
+                `;
+
+            }
+
+            else if(
+                file.url.match(
+                    /\.(mp3|wav|ogg)$/i
+                )
+            ){
+
+                html += `
+                <audio
+                controls
+                class="preview-audio">
+
+                <source
+                src="${file.url}">
+
+                </audio>
+                `;
+
+            }
+
+            html += `
+
+            <div class="actions">
+
+                <a href="${file.url}"
+                   target="_blank"
+                   class="open-btn">
+
+                Open
+
+                </a>
+
+                <button
+                class="share-btn"
+                onclick="shareFile('${file.url}')">
+
+                Share
+
+                </button>
+
+            </div>
+
+            </div>
+            `;
+
+        });
+
+        container.innerHTML = html;
+
+    }catch(error){
+
+        document.getElementById(
+            'filesContainer'
+        ).innerHTML = `
+        <div class="empty">
+        Failed To Connect To Server
+        </div>
+        `;
+
+    }
+
+}
+
+async function shareFile(url){
+
+    try{
+
+        if(navigator.share){
+
+            await navigator.share({
+
+                title:'SJT Drive File',
+
+                text:'View my shared file',
+
+                url:url
+
+            });
+
+        }else{
+
+            navigator.clipboard.writeText(url);
+
+            alert(
+                'File link copied to clipboard'
+            );
+
+        }
+
+    }catch(error){
+
+        alert(
+            'Unable to share file'
+        );
+
+    }
+
+}
+
+loadFiles();
 
 </script>
 
